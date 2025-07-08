@@ -52,7 +52,7 @@ jobs:
           rm -rf gitops
           
           # Clone repository using HTTPS URL without token
-          git clone https://github.com/LASKAV/grade-api-gitops.git gitops
+          git clone https://github.com/laskav/grade-api-gitops.git gitops
           cd gitops
           
           if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -70,4 +70,4 @@ jobs:
           git commit -m "Update image to ${{ github.sha }}"
           
           # Push
-          git push -f https://${GIT_TOKEN}@github.com/LASKAV/grade-api-gitops.git main
+          git push -f https://${GIT_TOKEN}@github.com/laskav/grade-api-gitops.git main
