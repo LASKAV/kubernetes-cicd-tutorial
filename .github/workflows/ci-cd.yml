@@ -37,8 +37,7 @@ jobs:
           tags: |
             ghcr.io/${{ steps.vars.outputs.REPO_LOWER }}:latest
             ghcr.io/${{ steps.vars.outputs.REPO_LOWER }}:${{ github.sha }}
-
-                  
+            
       - name: Update GitOps repository
         shell: bash
         env:
@@ -51,25 +50,32 @@ jobs:
           # Remove any existing gitops directory
           rm -rf gitops
           
-          # Clone repository using HTTPS URL without token
+          # Clone GitOps repo
           git clone https://github.com/laskav/grade-api-gitops.git gitops
           cd gitops
-
-          cat deployment.yaml
           
+          echo "--- BEFORE ---"
+          cat deployment.yaml
+
+          # Replace image tag using sed (macOS and Linux compatible)
           if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s|image: ghcr.io/${{ github.repository }}:.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" deployment.yaml
+            sed -i '' "s|image: ghcr.io/.*/kubernetes-cicd-tutorial:.*|image: ghcr.io/laskav/kubernetes-cicd-tutorial:${{ github.sha }}|g" deployment.yaml
           else
-            sed -i "s|image: ghcr.io/${{ github.repository }}:.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" deployment.yaml
+            sed -i "s|image: ghcr.io/.*/kubernetes-cicd-tutorial:.*|image: ghcr.io/laskav/kubernetes-cicd-tutorial:${{ github.sha }}|g" deployment.yaml
           fi
 
+          echo "--- AFTER ---"
           cat deployment.yaml
           
-          # Commit changes
+          # Git config
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add deployment.yaml
-          git commit -m "Update image to ${{ github.sha }}"
-          
-          # Push
-          git push -f https://${GIT_TOKEN}@github.com/laskav/grade-api-gitops.git main
+
+          # Only commit if there are actual changes
+          if git diff --quiet; then
+            echo "✅ No changes to commit."
+          else
+            git add deployment.yaml
+            git commit -m "Update image to ${{ github.sha }}"
+            git push -f https://${GIT_TOKEN}@github.com/laskav/grade-api-gitops.git main
+          fi
